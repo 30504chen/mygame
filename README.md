@@ -2,6 +2,8 @@
 
 岩漿洞穴主題的像素風橫向捲軸跑酷遊戲。純 Canvas 2D、無外部圖片與字型，支援鍵盤操作，含 6 個關卡區段、24 個感應突襲點、60 枚金幣與全球排行榜。
 
+**線上遊玩：** <https://30504chen.github.io/mygame/>
+
 ## 檔案
 
 - `index.html`：頁面、畫布、名字輸入視窗
@@ -41,10 +43,9 @@ python -m http.server 8080
 
 專案已接上 Firebase 專案 `mygame-5c409`，使用 Firestore 集合 `scores`。
 
-### 1. 建立 Firestore 資料庫
+### 1. Firestore 資料庫
 
-Firebase Console → **Build → Firestore Database → Create database**。
-選擇 **Production mode**（正式模式）建立。
+此專案使用 Firebase 專案 `mygame-5c409` 的 Firestore。若日後重建，請到 Firebase Console → **Build → Firestore Database → Create database**，選擇 **Production mode**（正式模式）建立。
 
 ### 2. 部署安全規則
 
@@ -68,25 +69,21 @@ firebase deploy --only firestore:rules
 
 > **重要：** 如果 Firestore 目前還是測試模式（`allow read, write: if true`），任何玩家都能刪除全球榜。請務必部署上面的規則，或至少把 Rules 貼進 Console 後按 Publish。
 
-### 3. 推送到 GitHub Pages
+### 3. GitHub Pages
+
+本專案已連到 <https://github.com/30504chen/mygame>，GitHub Pages 設定為 `main` / `/ (root)`，線上網址是 <https://30504chen.github.io/mygame/>。
+
+之後更新版本：
 
 ```powershell
-git init
 git add .
-git commit -m "Death Line with global leaderboard"
-git branch -M main
-git remote add origin https://github.com/<你的帳號>/<你的專案>.git
-git push -u origin main
+git commit -m "Update Death Line"
+git push
 ```
 
-到 GitHub 專案 → **Settings → Pages**：
-
-- Source：`Deploy from a branch`
-- Branch：`main` / `/ (root)`
-
-幾分鐘後即可用 `https://<你的帳號>.github.io/<你的專案>/` 開啟。
-
 > Firestore 不需要把 GitHub Pages 網域加入授權網域；那是 Firebase Authentication 才需要的設定。
+
+> repo 裡的 `run/` 是舊版重複資料夾，GitHub Pages 使用的是根目錄；如果不需要，可以在 GitHub 上刪除 `run/`，不影響線上版本。
 
 ## 排行榜行為
 
