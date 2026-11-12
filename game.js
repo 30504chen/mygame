@@ -268,7 +268,7 @@ const Store = {
   add(e) {
     let l = this.load();
     const old = l.find(x => x.name === e.name);
-    if (old && (old.score > e.score || (old.score === e.score && old.time <= e.time))) {
+    if (old && (old.score > e.score || (old.score === e.score && (old.time < e.time || (old.time === e.time && old.deaths <= e.deaths))))) {
       return { list: l, index: -1 };
     }
     l = l.filter(x => x.name !== e.name);
@@ -294,6 +294,101 @@ const Store = {
     };
   }
 };
+
+function withTimeout(promise, ms) {
+  let timer = 0;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error('timeout')), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
+async function getRemote() {
+  if (Game.remote) return Game.remote;
+  let r = window.DLRemote || null;
+  if (!r && window.DLRemoteReady) {
+    try {
+      r = await Promise.race([
+        window.DLRemoteReady,
+        new Promise(resolve => setTimeout(() => resolve(null), 5000))
+      ]);
+    } catch (e) {
+      r = null;
+    }
+  }
+  if (r && typeof r.isReady === 'function' && !r.isReady()) {
+    Game.remote = null;
+    return null;
+  }
+  if (r) Game.remote = r;
+  return r || null;
+}
+
+async function refreshBest() {
+  try {
+    const r = await getRemote();
+    if (!r) {
+      Game.bestSource = 'local';
+      return;
+    }
+    const b = await withTimeout(r.loadBest(), 8000);
+    Game.best = b;
+    Game.bestSource = 'remote';
+  } catch (e) {
+    Game.bestSource = 'local';
+  }
+}
+
+async function loadBoard(expectedState, token, highlightName) {
+  const r = await getRemote();
+  if (token !== Game.boardToken || Game.state !== expectedState) return;
+  if (!r) {
+    Game.boardLoading = false;
+    Game.boardSource = 'local';
+    Game.boardError = '離線模式 · 顯示本機紀錄';
+    Game.boardList = Store.load();
+    Game.newIndex = highlightName ? Game.boardList.findIndex(x => x.name === highlightName) : -1;
+    Game.best = Store.best();
+    Game.bestSource = 'local';
+    return;
+  }
+  try {
+    const list = await withTimeout(r.loadTop(), 8000);
+    if (token !== Game.boardToken || Game.state !== expectedState) return;
+    Game.boardList = list;
+    Game.boardSource = 'remote';
+    Game.boardError = '';
+    Game.boardLoading = false;
+    Game.newIndex = highlightName ? list.findIndex(x => x.name === highlightName) : -1;
+    withTimeout(r.loadBest(), 8000).then(b => {
+      if (token === Game.boardToken) {
+        Game.best = b;
+        Game.bestSource = 'remote';
+      }
+    }).catch(() => {});
+  } catch (e) {
+    if (token !== Game.boardToken || Game.state !== expectedState) return;
+    Game.boardLoading = false;
+    Game.boardSource = 'local';
+    Game.boardError = '連線失敗 · 顯示本機紀錄';
+    Game.boardList = Store.load();
+    Game.newIndex = highlightName ? Game.boardList.findIndex(x => x.name === highlightName) : -1;
+    Game.best = Store.best();
+    Game.bestSource = 'local';
+  }
+}
+
+function openBoard(expectedState, highlightName) {
+  Game.state = expectedState;
+  Game.boardToken++;
+  Game.boardLoading = true;
+  Game.boardError = '';
+  Game.boardSource = 'local';
+  Game.boardList = Store.load();
+  Game.newIndex = highlightName ? Game.boardList.findIndex(x => x.name === highlightName) : -1;
+  Game.stateT = 0;
+  loadBoard(expectedState, Game.boardToken, highlightName);
+}
 
 /* =========================================================
    關卡生成（固定地形 + 突襲區段）
@@ -440,9 +535,15 @@ const Game = {
   pauseMenu: 0,
   boardMenu: 0,
   boardFrom: 'title',
-  boardConfirm: false,
   boardList: [],
   newIndex: -1,
+  boardLoading: false,
+  boardError: '',
+  boardSource: 'local',
+  boardToken: 0,
+  submitting: false,
+  remote: undefined,
+  bestSource: 'local',
   best: null,
   level: null,
   player: null,
@@ -572,20 +673,58 @@ function hideNameOverlay() {
   document.getElementById('nameInput').blur();
 }
 
-function submitName() {
+async function submitName() {
+  if (Game.submitting) return;
   const el = document.getElementById('nameInput');
   let name = (el.value || '').trim().slice(0, 8);
   if (!name) name = '無名騎士';
   const r = Game.result;
+  if (!r) return;
   const entry = { name, score: r.score, coins: r.coins, time: r.time, deaths: r.deaths, ts: Date.now() };
-  const res = Store.add(entry);
-  Game.boardList = res.list;
-  Game.newIndex = res.index;
-  Game.best = Store.best();
+
+  Game.submitting = true;
+  const btn = document.getElementById('nameSubmit');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '上傳中…';
+  }
+
+  // 本機一定留一份：離線可玩，上線時也能當快取。
+  const localRes = Store.add(entry);
+  let remoteOk = false;
+  let errMsg = '';
+
+  try {
+    const remote = await getRemote();
+    if (!remote) throw new Error('offline');
+    await withTimeout(remote.submit(entry), 10000);
+    remoteOk = true;
+  } catch (e) {
+    errMsg = '無法連線 · 已存入本機';
+  }
+
+  Game.submitting = false;
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = '確認';
+  }
   hideNameOverlay();
-  Game.state = 'boardResult';
   Game.boardMenu = 0;
-  Game.stateT = 0;
+
+  if (remoteOk) {
+    openBoard('boardResult', name);
+  } else {
+    Game.state = 'boardResult';
+    Game.boardToken++;
+    Game.boardLoading = false;
+    Game.boardSource = 'local';
+    Game.boardError = errMsg;
+    Game.boardList = localRes.list;
+    Game.newIndex = localRes.index;
+    Game.best = Store.best();
+    Game.bestSource = 'local';
+    Game.stateT = 0;
+  }
 }
 
 /* =========================================================
@@ -634,11 +773,8 @@ function updateTitle() {
     if (Game.menu === 0) startRun();
     else if (Game.menu === 1) { Game.state = 'help'; Game.stateT = 0; }
     else {
-      Game.state = 'board';
       Game.boardFrom = 'title';
-      Game.boardConfirm = false;
-      Game.boardList = Store.load();
-      Game.stateT = 0;
+      openBoard('board');
     }
   }
 }
@@ -690,21 +826,7 @@ function updateClear(dt) {
 }
 
 function updateBoard(resultMode) {
-  if (Input.pressed.clear) {
-    if (!Game.boardConfirm) {
-      Game.boardConfirm = true;
-      Sound.sfx('menu');
-    } else {
-      Store.clear();
-      Game.boardList = [];
-      Game.boardConfirm = false;
-      Game.best = null;
-      Sound.sfx('select');
-    }
-    return;
-  }
   if (Input.pressed.pause) {
-    if (Game.boardConfirm) { Game.boardConfirm = false; return; }
     Game.state = 'title';
     Sound.startMusic('title');
     return;
@@ -1796,7 +1918,8 @@ function drawTitleScene() {
     txt('最多金幣 ' + b.coins, 250, 181, 9, '#ffe6c0');
     txt('最快 ' + fmtTime(b.time), 130, 194, 9, '#ffe6c0');
     txt('最少死亡 ' + b.deaths, 250, 194, 9, '#ffe6c0');
-    txt('M 靜音 · 排行榜收錄前 10 名', VIEW_W / 2, 208, 8, '#a08070', 'center');
+    const srcNote = Game.bestSource === 'remote' ? '全球排行榜 · 前 10 名' : '離線模式 · 本機紀錄';
+    txt('M 靜音 · ' + srcNote, VIEW_W / 2, 208, 8, '#a08070', 'center');
   } else {
     txt('尚無紀錄，等你來挑戰', VIEW_W / 2, 184, 10, '#c9a08a', 'center');
     txt('1 命通關 · 60 枚金幣 · 無預警突襲', VIEW_W / 2, 202, 8, '#a08070', 'center');
@@ -1870,7 +1993,7 @@ function drawBoard(resultMode) {
   txt('死亡', 404, 48, 8, '#a08070', 'right');
 
   if (!list.length) {
-    txt('尚無紀錄', VIEW_W / 2, 120, 11, '#c9a08a', 'center');
+    txt(Game.boardLoading ? '載入排行榜…' : '尚無紀錄', VIEW_W / 2, 120, 11, '#c9a08a', 'center');
   } else {
     for (let i = 0; i < list.length; i++) {
       const e = list[i];
@@ -1896,11 +2019,22 @@ function drawBoard(resultMode) {
     txt('Enter / Esc 返回', VIEW_W / 2, 222, 9, '#a08070', 'center');
   }
 
-  if (Game.boardConfirm) {
-    txt('再按 C 確認清除所有紀錄', VIEW_W / 2, 240, 9, '#ff6b62', 'center');
+  let note = '';
+  let noteCol = '#6e5a52';
+  if (Game.boardError) {
+    note = Game.boardError;
+    noteCol = '#ff8a6a';
+  } else if (Game.boardLoading) {
+    note = '同步全球排行榜中…';
+    noteCol = '#c9a08a';
+  } else if (Game.boardSource === 'remote') {
+    note = '全球排行榜 · 前 10 名';
+    noteCol = '#a08070';
   } else {
-    txt('C 清除紀錄', VIEW_W / 2, 240, 8, '#6e5a52', 'center');
+    note = '離線模式 · 本機紀錄';
+    noteCol = '#a08070';
   }
+  txt(note, VIEW_W / 2, 240, 8, noteCol, 'center');
 }
 
 /* =========================================================
@@ -2016,6 +2150,8 @@ function loop(now) {
 function init() {
   Input.init();
   Game.best = Store.best();
+  Game.bestSource = 'local';
+  refreshBest();
 
   const nameInput = document.getElementById('nameInput');
   nameInput.addEventListener('keydown', e => {

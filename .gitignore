@@ -1,0 +1,13 @@
+# 測試截圖
+shot.png
+
+# 作業系統
+.DS_Store
+Thumbs.db
+
+# Firebase CLI
+.firebase/
+firebase-debug.log
+
+# 依賴
+node_modules/

@@ -20,6 +20,23 @@
     </div>
   </div>
 
+  <script>
+    // Firebase 全球排行榜：模組載入完成後才會 resolve。
+    // 直接以 file:// 開啟時跳過模組，自動使用本機排行榜。
+    window.DLRemoteReady = new Promise(resolve => {
+      window.__resolveDLRemote = resolve;
+      setTimeout(() => resolve(window.DLRemote || null), 4000);
+    });
+
+    if (location.protocol === 'file:') {
+      window.__resolveDLRemote(null);
+    } else {
+      const firebaseScript = document.createElement('script');
+      firebaseScript.type = 'module';
+      firebaseScript.src = 'firebase.js';
+      document.head.appendChild(firebaseScript);
+    }
+  </script>
   <script src="game.js"></script>
 </body>
 </html>
