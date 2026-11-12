@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Death Line｜像素跑酷</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="stage">
+    <canvas id="game" width="480" height="270"></canvas>
+
+    <div id="nameOverlay" class="hidden">
+      <div class="name-panel">
+        <h2>留下你的名字</h2>
+        <p>最多 8 個字元，空白則為「無名騎士」</p>
+        <input id="nameInput" type="text" maxlength="8" autocomplete="off" spellcheck="false" placeholder="無名騎士">
+        <button id="nameSubmit" type="button">確認</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
