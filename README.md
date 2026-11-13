@@ -24,6 +24,13 @@
 | Esc | 暫停 / 返回 |
 | R | 重新開始本輪 |
 | M | 靜音 |
+| L | 切換中文 / English |
+
+## 語言 / Language
+
+首次開啟時會依瀏覽器語言自動選擇中文或英文；按 **L** 可隨時切換，選擇會保存在 `localStorage`。
+
+The UI auto-detects your browser language. Press **L** to switch between Chinese and English; your choice is saved in `localStorage`.
 
 ## 本機執行
 

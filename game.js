@@ -44,6 +44,192 @@ function fmtTime(s) {
 }
 
 /* =========================================================
+   語言 / Language
+   ========================================================= */
+
+const LANG_KEY = 'deathline_lang_v1';
+
+const I18N = {
+  zh: {
+    docTitle: 'Death Line｜像素跑酷',
+    langToggle: 'L English',
+    tagline: '像 素 跑 酷 · 岩 漿 洞 穴',
+    titleMenu: ['開始遊戲', '操作說明', '排行榜'],
+    bestTitle: '最佳紀錄',
+    bestScore: '最高分 ',
+    bestCoins: '最多金幣 ',
+    bestTime: '最快 ',
+    bestDeaths: '最少死亡 ',
+    bestSourceRemote: '全球排行榜 · 前 10 名',
+    bestSourceLocal: '離線模式 · 本機紀錄',
+    muteHint: 'M 靜音',
+    noRecordsTitle: '尚無紀錄，等你來挑戰',
+    noRecordsSubtitle: '1 命通關 · 60 枚金幣 · 無預警突襲',
+    helpTitle: '操作說明',
+    helpLines: [
+      'A / D 或 ← / →   左右移動',
+      '空白 或 ↑        跳躍（可二段跳）',
+      'S 或 ↓           蹲下（按住）',
+      '雙擊 A / D 後按住  加速跑',
+      'Esc 暫停　R 重新開始　M 靜音　L 語言',
+      '◆ 尖刺、岩漿、巡邏煤球碰到即死',
+      '◆ 煤球只從平台邊緣走入，不能踩',
+      '◆ 裂石靠近就崩，不會重生',
+      '◆ 頭頂平台升起時蹲下可通過',
+      '◆ 突襲完全無預警，系統會預測',
+      '　你 0.6 秒後的落點',
+      '◆ 1 命通關，死亡從關卡開頭重來',
+      '◆ 全關 60 金幣，15 枚是危險誘餌'
+    ],
+    backHint: 'Enter / Esc 返回',
+    boardTitle: '排行榜',
+    nameHeader: '名字',
+    scoreHeader: '分數',
+    timeHeader: '時間',
+    deathsHeader: '死亡',
+    boardLoading: '載入排行榜…',
+    boardEmpty: '尚無紀錄',
+    playAgain: '再玩一次',
+    backToTitle: '回標題',
+    enterEscBack: 'Enter / Esc 返回',
+    syncNote: '同步全球排行榜中…',
+    globalTop10: '全球排行榜 · 前 10 名',
+    offlineLocal: '離線模式 · 本機紀錄',
+    loadFailedLocal: '連線失敗 · 顯示本機紀錄',
+    submitFailedLocal: '無法連線 · 已存入本機',
+    hudDeaths: '死亡 ',
+    pauseTitle: '暫停',
+    pauseResume: '繼續遊戲',
+    pauseRestart: '重新開始',
+    pauseBack: '回標題',
+    pauseHint: 'Esc 繼續',
+    deadTitle: '死 亡',
+    deadCount: '死亡次數 ',
+    clearTitle: '通 關',
+    resultCoins: '金幣',
+    resultTime: '用時',
+    resultDeaths: '死亡次數',
+    resultScore: '分 數',
+    resultEnterName: '按 Enter 留下名字',
+    nameTitle: '留下你的名字',
+    nameHint: '最多 8 個字元，空白則為「無名騎士」',
+    namePlaceholder: '無名騎士',
+    nameConfirm: '確認',
+    nameUploading: '上傳中…',
+    defaultName: '無名騎士'
+  },
+  en: {
+    docTitle: 'Death Line｜Pixel Parkour',
+    langToggle: 'L 中文',
+    tagline: 'PIXEL PARKOUR · LAVA CAVES',
+    titleMenu: ['Start Game', 'How to Play', 'Leaderboard'],
+    bestTitle: 'BEST RECORDS',
+    bestScore: 'High Score ',
+    bestCoins: 'Most Coins ',
+    bestTime: 'Fastest ',
+    bestDeaths: 'Fewest Deaths ',
+    bestSourceRemote: 'Global Leaderboard · Top 10',
+    bestSourceLocal: 'Offline Mode · Local Records',
+    muteHint: 'M Mute',
+    noRecordsTitle: 'No records yet — be the first!',
+    noRecordsSubtitle: '1 life · 60 coins · No-warning ambushes',
+    helpTitle: 'HOW TO PLAY',
+    helpLines: [
+      'A / D or ← / →   Move',
+      'Space or ↑      Jump (double jump)',
+      'S or ↓          Crouch (hold)',
+      'Double-tap A / D, hold to sprint',
+      'Esc Pause   R Restart   M Mute   L Language',
+      '◆ Spikes, lava, and coal kill instantly',
+      '◆ Coal enters from ledges; never stomp it',
+      '◆ Cracked rocks collapse when approached',
+      '◆ Crouch to pass under rising platforms',
+      '◆ Ambushes have no warning; the game',
+      "   predicts where you'll be in 0.6s",
+      '◆ 1 life; death restarts from the beginning',
+      '◆ 60 coins total; 15 are dangerous bait'
+    ],
+    backHint: 'Enter / Esc  Back',
+    boardTitle: 'LEADERBOARD',
+    nameHeader: 'Name',
+    scoreHeader: 'Score',
+    timeHeader: 'Time',
+    deathsHeader: 'Deaths',
+    boardLoading: 'Loading leaderboard…',
+    boardEmpty: 'No records yet',
+    playAgain: 'Play Again',
+    backToTitle: 'Back to Title',
+    enterEscBack: 'Enter / Esc  Back',
+    syncNote: 'Syncing global leaderboard…',
+    globalTop10: 'Global Leaderboard · Top 10',
+    offlineLocal: 'Offline Mode · Local Records',
+    loadFailedLocal: 'Connection failed · Showing local records',
+    submitFailedLocal: 'Could not connect · Saved locally',
+    hudDeaths: 'Deaths ',
+    pauseTitle: 'PAUSED',
+    pauseResume: 'Resume',
+    pauseRestart: 'Restart',
+    pauseBack: 'Back to Title',
+    pauseHint: 'Esc to resume',
+    deadTitle: 'DEAD',
+    deadCount: 'Deaths ',
+    clearTitle: 'CLEARED',
+    resultCoins: 'Coins',
+    resultTime: 'Time',
+    resultDeaths: 'Deaths',
+    resultScore: 'SCORE',
+    resultEnterName: 'Press Enter to submit your name',
+    nameTitle: 'Enter your name',
+    nameHint: 'Up to 8 characters. Blank = "Nameless".',
+    namePlaceholder: 'Nameless',
+    nameConfirm: 'Confirm',
+    nameUploading: 'Uploading…',
+    defaultName: 'Nameless'
+  }
+};
+
+function detectLang() {
+  try {
+    const saved = localStorage.getItem(LANG_KEY);
+    if (saved === 'zh' || saved === 'en') return saved;
+  } catch (e) {}
+  const nav = String(navigator.language || 'zh').toLowerCase();
+  return nav.indexOf('zh') === 0 ? 'zh' : 'en';
+}
+
+function t(key) {
+  const dict = I18N[Game.lang] || I18N.zh;
+  if (dict[key] !== undefined) return dict[key];
+  return I18N.zh[key] !== undefined ? I18N.zh[key] : key;
+}
+
+function uiFont() {
+  return Game.lang === 'zh' ? CN_FONT : EN_FONT;
+}
+
+function applyLangToDOM() {
+  document.documentElement.lang = Game.lang === 'zh' ? 'zh-Hant' : 'en';
+  document.title = t('docTitle');
+  const title = document.getElementById('nameTitle');
+  const hint = document.getElementById('nameHint');
+  const input = document.getElementById('nameInput');
+  const btn = document.getElementById('nameSubmit');
+  if (title) title.textContent = t('nameTitle');
+  if (hint) hint.textContent = t('nameHint');
+  if (input) input.placeholder = t('namePlaceholder');
+  if (btn && !Game.submitting) btn.textContent = t('nameConfirm');
+}
+
+function toggleLang() {
+  Game.lang = Game.lang === 'zh' ? 'en' : 'zh';
+  try {
+    localStorage.setItem(LANG_KEY, Game.lang);
+  } catch (e) {}
+  applyLangToDOM();
+  Sound.sfx('menu');
+}
+
+/* =========================================================
    音效與音樂（Web Audio 即時合成）
    ========================================================= */
 
@@ -192,7 +378,7 @@ const KEYMAP = {
   ArrowUp: ['jump', 'up'], Space: ['jump'],
   ArrowDown: ['crouch', 'down'], KeyS: ['crouch'],
   Escape: ['pause'], Enter: ['enter'], NumpadEnter: ['enter'],
-  KeyR: ['restart'], KeyM: ['mute'], KeyC: ['clear']
+  KeyR: ['restart'], KeyM: ['mute'], KeyL: ['lang'], KeyC: ['clear']
 };
 
 const Input = {
@@ -345,7 +531,7 @@ async function loadBoard(expectedState, token, highlightName) {
   if (!r) {
     Game.boardLoading = false;
     Game.boardSource = 'local';
-    Game.boardError = '離線模式 · 顯示本機紀錄';
+    Game.boardError = 'offlineLocal';
     Game.boardList = Store.load();
     Game.newIndex = highlightName ? Game.boardList.findIndex(x => x.name === highlightName) : -1;
     Game.best = Store.best();
@@ -370,7 +556,7 @@ async function loadBoard(expectedState, token, highlightName) {
     if (token !== Game.boardToken || Game.state !== expectedState) return;
     Game.boardLoading = false;
     Game.boardSource = 'local';
-    Game.boardError = '連線失敗 · 顯示本機紀錄';
+    Game.boardError = 'loadFailedLocal';
     Game.boardList = Store.load();
     Game.newIndex = highlightName ? Game.boardList.findIndex(x => x.name === highlightName) : -1;
     Game.best = Store.best();
@@ -529,6 +715,7 @@ function generateLevel() {
 
 const Game = {
   state: 'title',
+  lang: detectLang(),
   stateT: 0,
   bgT: 0,
   menu: 0,
@@ -677,7 +864,7 @@ async function submitName() {
   if (Game.submitting) return;
   const el = document.getElementById('nameInput');
   let name = (el.value || '').trim().slice(0, 8);
-  if (!name) name = '無名騎士';
+  if (!name) name = t('defaultName');
   const r = Game.result;
   if (!r) return;
   const entry = { name, score: r.score, coins: r.coins, time: r.time, deaths: r.deaths, ts: Date.now() };
@@ -686,13 +873,13 @@ async function submitName() {
   const btn = document.getElementById('nameSubmit');
   if (btn) {
     btn.disabled = true;
-    btn.textContent = '上傳中…';
+    btn.textContent = t('nameUploading');
   }
 
   // 本機一定留一份：離線可玩，上線時也能當快取。
   const localRes = Store.add(entry);
   let remoteOk = false;
-  let errMsg = '';
+  let errKey = '';
 
   try {
     const remote = await getRemote();
@@ -700,13 +887,13 @@ async function submitName() {
     await withTimeout(remote.submit(entry), 10000);
     remoteOk = true;
   } catch (e) {
-    errMsg = '無法連線 · 已存入本機';
+    errKey = 'submitFailedLocal';
   }
 
   Game.submitting = false;
   if (btn) {
     btn.disabled = false;
-    btn.textContent = '確認';
+    btn.textContent = t('nameConfirm');
   }
   hideNameOverlay();
   Game.boardMenu = 0;
@@ -718,7 +905,7 @@ async function submitName() {
     Game.boardToken++;
     Game.boardLoading = false;
     Game.boardSource = 'local';
-    Game.boardError = errMsg;
+    Game.boardError = errKey;
     Game.boardList = localRes.list;
     Game.newIndex = localRes.index;
     Game.best = Store.best();
@@ -738,6 +925,10 @@ function update(dt) {
   if (Input.pressed.mute) {
     Sound.toggleMute();
     Sound.sfx('mute');
+  }
+
+  if (Input.pressed.lang && Game.state !== 'name') {
+    toggleLang();
   }
 
   switch (Game.state) {
@@ -1898,7 +2089,10 @@ function drawTitleScene() {
 
   drawLogo();
 
-  const items = ['開始遊戲', '操作說明', '排行榜'];
+  const f = uiFont();
+  txt(t('langToggle'), VIEW_W - 14, 12, 8, '#a08070', 'right', CN_FONT);
+
+  const items = t('titleMenu');
   for (let i = 0; i < items.length; i++) {
     const sel = i === Game.menu;
     const y = 106 + i * 20;
@@ -1907,22 +2101,22 @@ function drawTitleScene() {
       ctx.fillRect(VIEW_W / 2 - 80, y - 3, 160, 18);
       txt('▶', VIEW_W / 2 - 64, y + 1, 11, '#ffd75e');
     }
-    txt(items[i], VIEW_W / 2, y, sel ? 13 : 11, sel ? '#ffd75e' : '#d9b8a8', 'center');
+    txt(items[i], VIEW_W / 2, y, sel ? 13 : 11, sel ? '#ffd75e' : '#d9b8a8', 'center', f);
   }
 
   panel(118, 164, 244, 58);
-  txt('最佳紀錄', 130, 168, 9, '#ffb347');
+  txt(t('bestTitle'), 130, 168, 9, '#ffb347', 'left', f);
   const b = Game.best;
   if (b) {
-    txt('最高分 ' + b.score, 130, 181, 9, '#ffe6c0');
-    txt('最多金幣 ' + b.coins, 250, 181, 9, '#ffe6c0');
-    txt('最快 ' + fmtTime(b.time), 130, 194, 9, '#ffe6c0');
-    txt('最少死亡 ' + b.deaths, 250, 194, 9, '#ffe6c0');
-    const srcNote = Game.bestSource === 'remote' ? '全球排行榜 · 前 10 名' : '離線模式 · 本機紀錄';
-    txt('M 靜音 · ' + srcNote, VIEW_W / 2, 208, 8, '#a08070', 'center');
+    txt(t('bestScore') + b.score, 130, 181, 9, '#ffe6c0', 'left', f);
+    txt(t('bestCoins') + b.coins, 250, 181, 9, '#ffe6c0', 'left', f);
+    txt(t('bestTime') + fmtTime(b.time), 130, 194, 9, '#ffe6c0', 'left', f);
+    txt(t('bestDeaths') + b.deaths, 250, 194, 9, '#ffe6c0', 'left', f);
+    const srcNote = Game.bestSource === 'remote' ? t('bestSourceRemote') : t('bestSourceLocal');
+    txt(t('muteHint') + ' · ' + srcNote, VIEW_W / 2, 208, 8, '#a08070', 'center', f);
   } else {
-    txt('尚無紀錄，等你來挑戰', VIEW_W / 2, 184, 10, '#c9a08a', 'center');
-    txt('1 命通關 · 60 枚金幣 · 無預警突襲', VIEW_W / 2, 202, 8, '#a08070', 'center');
+    txt(t('noRecordsTitle'), VIEW_W / 2, 184, 10, '#c9a08a', 'center', f);
+    txt(t('noRecordsSubtitle'), VIEW_W / 2, 202, 8, '#a08070', 'center', f);
   }
 }
 
@@ -1942,9 +2136,9 @@ function drawLogo() {
   ctx.fillStyle = g;
   ctx.fillText('DEATH LINE', VIEW_W / 2, 52);
 
-  ctx.font = 'bold 11px ' + CN_FONT;
+  ctx.font = 'bold 11px ' + uiFont();
   ctx.fillStyle = '#e8b090';
-  ctx.fillText('像 素 跑 酷 · 岩 漿 洞 穴', VIEW_W / 2, 79);
+  ctx.fillText(t('tagline'), VIEW_W / 2, 79);
   ctx.restore();
 }
 
@@ -1952,48 +2146,38 @@ function drawHelp() {
   ctx.fillStyle = 'rgba(5,2,3,0.72)';
   ctx.fillRect(0, 0, VIEW_W, VIEW_H);
   panel(44, 22, 392, 226);
-  txt('操作說明', VIEW_W / 2, 30, 14, '#ffd75e', 'center');
+  const f = uiFont();
+  txt(t('langToggle'), VIEW_W - 14, 8, 8, '#a08070', 'right', CN_FONT);
+  txt(t('helpTitle'), VIEW_W / 2, 30, 14, '#ffd75e', 'center', f);
 
-  const lines = [
-    'A / D 或 ← / →   左右移動',
-    '空白 或 ↑        跳躍（可二段跳）',
-    'S 或 ↓           蹲下（按住）',
-    '雙擊 A / D 後按住  加速跑',
-    'Esc 暫停　R 重新開始　M 靜音',
-    '◆ 尖刺、岩漿、巡邏煤球碰到即死',
-    '◆ 煤球只從平台邊緣走入，不能踩',
-    '◆ 裂石靠近就崩，不會重生',
-    '◆ 頭頂平台升起時蹲下可通過',
-    '◆ 突襲完全無預警，系統會預測',
-    '　你 0.6 秒後的落點',
-    '◆ 1 命通關，死亡從關卡開頭重來',
-    '◆ 全關 60 金幣，15 枚是危險誘餌'
-  ];
+  const lines = t('helpLines');
 
   let y = 54;
   for (const s of lines) {
-    txt(s, 62, y, 9, s.startsWith('◆') ? '#ffb347' : '#e8d0c0');
+    txt(s, 62, y, 9, s.startsWith('◆') ? '#ffb347' : '#e8d0c0', 'left', f);
     y += 13.5;
   }
 
-  txt('Enter / Esc 返回', VIEW_W / 2, 232, 8, '#a08070', 'center');
+  txt(t('backHint'), VIEW_W / 2, 232, 8, '#a08070', 'center', f);
 }
 
 function drawBoard(resultMode) {
   ctx.fillStyle = 'rgba(5,2,3,0.78)';
   ctx.fillRect(0, 0, VIEW_W, VIEW_H);
   panel(28, 18, 424, 238);
-  txt('排行榜', VIEW_W / 2, 26, 15, '#ffd75e', 'center');
+  const f = uiFont();
+  txt(t('langToggle'), VIEW_W - 14, 8, 8, '#a08070', 'right', CN_FONT);
+  txt(t('boardTitle'), VIEW_W / 2, 26, 15, '#ffd75e', 'center', f);
 
   const list = Game.boardList || [];
   txt('#', 44, 48, 8, '#a08070', 'left', EN_FONT);
-  txt('名字', 66, 48, 8, '#a08070');
-  txt('分數', 262, 48, 8, '#a08070', 'right', EN_FONT);
-  txt('時間', 326, 48, 8, '#a08070', 'right', EN_FONT);
-  txt('死亡', 404, 48, 8, '#a08070', 'right');
+  txt(t('nameHeader'), 66, 48, 8, '#a08070', 'left', f);
+  txt(t('scoreHeader'), 262, 48, 8, '#a08070', 'right', f);
+  txt(t('timeHeader'), 326, 48, 8, '#a08070', 'right', f);
+  txt(t('deathsHeader'), 404, 48, 8, '#a08070', 'right', f);
 
   if (!list.length) {
-    txt(Game.boardLoading ? '載入排行榜…' : '尚無紀錄', VIEW_W / 2, 120, 11, '#c9a08a', 'center');
+    txt(Game.boardLoading ? t('boardLoading') : t('boardEmpty'), VIEW_W / 2, 120, 11, '#c9a08a', 'center', f);
   } else {
     for (let i = 0; i < list.length; i++) {
       const e = list[i];
@@ -2001,7 +2185,7 @@ function drawBoard(resultMode) {
       const isNew = resultMode && i === Game.newIndex;
       const col = isNew ? '#ffd75e' : (i % 2 ? '#e8d0c0' : '#d9b8a8');
       txt(String(i + 1), 44, y, 9, col, 'left', EN_FONT);
-      txt(e.name, 66, y, 9, col);
+      txt(e.name, 66, y, 9, col, 'left', CN_FONT);
       txt(String(e.score), 262, y, 9, col, 'right', EN_FONT);
       txt(fmtTime(e.time), 326, y, 9, col, 'right', EN_FONT);
       txt(String(e.deaths), 404, y, 9, col, 'right', EN_FONT);
@@ -2013,28 +2197,29 @@ function drawBoard(resultMode) {
     const y = 212;
     const sel0 = Game.boardMenu === 0;
     const sel1 = Game.boardMenu === 1;
-    txt((sel0 ? '▶ ' : '　') + '再玩一次', VIEW_W / 2 - 72, y, 10, sel0 ? '#ffd75e' : '#a08070', 'center');
-    txt((sel1 ? '▶ ' : '　') + '回標題', VIEW_W / 2 + 72, y, 10, sel1 ? '#ffd75e' : '#a08070', 'center');
+    const pad = Game.lang === 'zh' ? '　' : '  ';
+    txt((sel0 ? '▶ ' : pad) + t('playAgain'), VIEW_W / 2 - 72, y, 10, sel0 ? '#ffd75e' : '#a08070', 'center', f);
+    txt((sel1 ? '▶ ' : pad) + t('backToTitle'), VIEW_W / 2 + 72, y, 10, sel1 ? '#ffd75e' : '#a08070', 'center', f);
   } else {
-    txt('Enter / Esc 返回', VIEW_W / 2, 222, 9, '#a08070', 'center');
+    txt(t('enterEscBack'), VIEW_W / 2, 222, 9, '#a08070', 'center', f);
   }
 
   let note = '';
   let noteCol = '#6e5a52';
   if (Game.boardError) {
-    note = Game.boardError;
+    note = t(Game.boardError);
     noteCol = '#ff8a6a';
   } else if (Game.boardLoading) {
-    note = '同步全球排行榜中…';
+    note = t('syncNote');
     noteCol = '#c9a08a';
   } else if (Game.boardSource === 'remote') {
-    note = '全球排行榜 · 前 10 名';
+    note = t('globalTop10');
     noteCol = '#a08070';
   } else {
-    note = '離線模式 · 本機紀錄';
+    note = t('offlineLocal');
     noteCol = '#a08070';
   }
-  txt(note, VIEW_W / 2, 240, 8, noteCol, 'center');
+  txt(note, VIEW_W / 2, 240, 8, noteCol, 'center', f);
 }
 
 /* =========================================================
@@ -2080,56 +2265,62 @@ function drawHUD() {
   drawCoin(18, 22, Game.bgT, 0);
   txt(Game.coins + '/' + Game.level.totalCoins, 30, 15, 10, '#ffe08a');
   txt(fmtTime(Game.runTime), 14, 34, 10, '#e8d0c0');
-  txt('死亡 ' + Game.deaths, VIEW_W - 14, 15, 9, '#c9a08a', 'right');
+  txt(t('hudDeaths') + Game.deaths, VIEW_W - 14, 15, 9, '#c9a08a', 'right', uiFont());
 }
 
 function drawPause() {
   ctx.fillStyle = 'rgba(5,2,3,0.68)';
   ctx.fillRect(0, 0, VIEW_W, VIEW_H);
   panel(150, 78, 180, 116);
-  txt('暫停', VIEW_W / 2, 88, 16, '#ffd75e', 'center');
+  const f = uiFont();
+  txt(t('langToggle'), VIEW_W - 14, VIEW_H - 12, 8, '#a08070', 'right', CN_FONT);
+  txt(t('pauseTitle'), VIEW_W / 2, 88, 16, '#ffd75e', 'center', f);
 
-  const items = ['繼續遊戲', '重新開始', '回標題'];
+  const items = [t('pauseResume'), t('pauseRestart'), t('pauseBack')];
+  const pad = Game.lang === 'zh' ? '　' : '  ';
   for (let i = 0; i < items.length; i++) {
     const sel = i === Game.pauseMenu;
     const y = 116 + i * 20;
-    txt((sel ? '▶ ' : '　') + items[i], VIEW_W / 2, y, sel ? 11 : 10, sel ? '#ffd75e' : '#c9a08a', 'center');
+    txt((sel ? '▶ ' : pad) + items[i], VIEW_W / 2, y, sel ? 11 : 10, sel ? '#ffd75e' : '#c9a08a', 'center', f);
   }
-  txt('Esc 繼續', VIEW_W / 2, 178, 8, '#a08070', 'center');
+  txt(t('pauseHint'), VIEW_W / 2, 178, 8, '#a08070', 'center', f);
 }
 
 function drawDead() {
   const a = Math.max(0, 1 - Game.deadT * 2.5);
   ctx.fillStyle = 'rgba(120,10,10,' + (a * 0.35).toFixed(3) + ')';
   ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-  txt('死 亡', VIEW_W / 2, 112, 26, '#ff5a3a', 'center');
-  txt('死亡次數 ' + Game.deaths, VIEW_W / 2, 146, 10, '#ffb347', 'center');
+  const f = uiFont();
+  txt(t('deadTitle'), VIEW_W / 2, 112, 26, '#ff5a3a', 'center', f);
+  txt(t('deadCount') + Game.deaths, VIEW_W / 2, 146, 10, '#ffb347', 'center', f);
 }
 
 function drawResult() {
   ctx.fillStyle = 'rgba(5,2,3,0.72)';
   ctx.fillRect(0, 0, VIEW_W, VIEW_H);
   panel(90, 42, 300, 186);
-  txt('通 關', VIEW_W / 2, 52, 20, '#ffd75e', 'center');
+  const f = uiFont();
+  txt(t('langToggle'), VIEW_W - 14, 10, 8, '#a08070', 'right', CN_FONT);
+  txt(t('clearTitle'), VIEW_W / 2, 52, 20, '#ffd75e', 'center', f);
 
   const r = Game.result;
   if (!r) return;
 
   const rows = [
-    ['金幣', r.coins + ' / ' + r.total],
-    ['用時', fmtTime(r.time)],
-    ['死亡次數', String(r.deaths)]
+    [t('resultCoins'), r.coins + ' / ' + r.total],
+    [t('resultTime'), fmtTime(r.time)],
+    [t('resultDeaths'), String(r.deaths)]
   ];
   let y = 86;
   for (const row of rows) {
-    txt(row[0], 116, y, 10, '#c9a08a');
-    txt(row[1], 364, y, 10, '#ffe6c0', 'right');
+    txt(row[0], 116, y, 10, '#c9a08a', 'left', f);
+    txt(row[1], 364, y, 10, '#ffe6c0', 'right', EN_FONT);
     y += 20;
   }
 
-  txt('分 數', 116, y + 8, 11, '#c9a08a');
+  txt(t('resultScore'), 116, y + 8, 11, '#c9a08a', 'left', f);
   txt(String(r.score), 364, y, 24, '#ffd75e', 'right', EN_FONT);
-  txt('按 Enter 留下名字', VIEW_W / 2, 202, 9, '#c9a08a', 'center');
+  txt(t('resultEnterName'), VIEW_W / 2, 202, 9, '#c9a08a', 'center', f);
 }
 
 /* =========================================================
@@ -2149,6 +2340,7 @@ function loop(now) {
 
 function init() {
   Input.init();
+  applyLangToDOM();
   Game.best = Store.best();
   Game.bestSource = 'local';
   refreshBest();
