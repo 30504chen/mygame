@@ -3,7 +3,7 @@
    素材、營地火堆、料理、飽食度
    ============================================================ */
 var satiety = 100;
-const TEST_FULL_SATIETY = true;   // 測試用：飽食度鎖 100，製作完成後改為 false
+const TEST_FULL_SATIETY = false;  /* 飽食度恢復正常（不再鎖 100） */
 let faintT = 0, faintRoll = 0, heroSaved = null;
 let lastSatInt = -1;
 const SAT_DRAIN = 100 / (4 * 120);   // 4 個遊戲日掉完（每日 120 秒）
