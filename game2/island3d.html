@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>海島 3D — 島上生活</title>
+<link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+<div id="scene"><div id="stars"></div></div>
+<div id="grade"></div>
+<div id="areaFade"></div>
+<div id="areaTag"></div>
+<div id="vignette"></div>
+<div id="hud">
+  <b>海島生活</b><br>
+  <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 走動　連按兩下 跑<br>
+  <kbd>Space</kbd>／左鍵 拋竿、拉竿<br>
+  <kbd>E</kbd> 互動／採集／交易（小屋門口可進入）　蚯蚓 <span id="bait">10</span><br>
+  <kbd>I</kbd> 背包　<kbd>B</kbd> 圖鑑　<kbd>M</kbd> 音效
+  <div id="hudbag">金幣 <span id="hudGold">0</span>　💎 鑽石 <span id="hudDiamond">0</span></div>
+  <div id="satwrap"><span>飽食</span><div id="satbar"><i id="satfill"></i></div></div>
+  <div id="buffrow"></div>
+</div>
+<div id="dial">
+  <svg viewBox="0 0 120 120" width="128" height="128">
+    <g id="dialArcs" transform="translate(60,60)"></g>
+    <circle id="dialDisc" cx="60" cy="60" r="33" fill="#fffaf0" stroke="#e6d5b6" stroke-width="2"/>
+    <text id="dialName" x="60" y="59" text-anchor="middle" font-size="20" font-weight="800" fill="#2b5b6d">白天</text>
+    <text id="dialSub" x="60" y="78" text-anchor="middle" font-size="11" fill="#8aa3ad">第 1 天</text>
+    <circle id="dialDot" cx="60" cy="10" r="7" fill="#fffaf0" stroke="#2b5b6d" stroke-width="2.6"/>
+  </svg>
+</div>
+<div id="dbg" style="position:fixed;left:18px;bottom:14px;font-size:12px;color:#0d3a4a;background:rgba(255,255,255,.7);padding:8px 10px;border-radius:8px"></div>
+<div id="stats" style="position:fixed;right:18px;bottom:14px;font-size:11px;color:#0d3a4a;background:rgba(255,255,255,.7);padding:8px 10px;border-radius:8px;font-family:monospace;line-height:1.5;display:none"></div>
+<div id="dbgpanel" style="position:fixed;right:18px;top:160px;font-size:11px;color:#0d3a4a;background:rgba(255,255,255,.85);padding:8px 10px;border-radius:8px;display:none;z-index:30;min-width:180px">
+  <b>效能除錯</b><br>
+  <label><input type="checkbox" id="dbgShadow" checked> 陰影</label><br>
+  <label><input type="checkbox" id="dbgNormal" checked> 法線貼圖</label><br>
+  <label><input type="checkbox" id="dbgTrees" checked> 樹木</label><br>
+  <label><input type="checkbox" id="dbgGrass" checked> 草/花/石</label><br>
+  <label>PixelRatio: <select id="dbgPR"><option value="1">1</option><option value="1.5" selected>1.5</option><option value="2">2</option></select></label><br>
+  <button id="dbgTop10">列出 Top10 面數</button>
+  <div id="dbgTop10Out" style="margin-top:6px;font-size:10px;max-height:200px;overflow:auto"></div>
+</div>
+<div id="prompt">載入中…</div>
+<div id="bang">！</div>
+<div id="card"><div class="n"></div><div class="m"></div><div class="r"></div></div>
+
+<div id="panel-inv" class="panel">
+  <div class="phead"><b>背包</b><span><em id="invGold">0</em> 金　<em id="invDiamond">0</em> 💎　蚯蚓 <em id="invBait">0</em>　<kbd>I</kbd> 關閉</span></div>
+  <div class="pbody">
+    <div class="dexsec">魚簍 <em id="invCount">0/30</em>　點格子料理直接吃</div>
+    <div class="slotgrid" id="invGrid"></div>
+    <div class="toolrow">工具：釣竿、撈網等工具無耐久</div>
+  </div>
+</div>
+<div id="panel-chest" class="panel">
+  <div class="phead"><b>倉庫箱子</b><span>金幣 <em id="chestGold">0</em>　💎 <em id="chestDiamond">0</em>　<kbd>E</kbd> 關閉</span></div>
+  <div class="pbody">
+    <div class="dexsec">魚簍 <em id="chestInvCount">0/30</em>　點格子移入倉庫</div>
+    <div class="slotgrid" id="chestInvGrid"></div>
+    <div class="dexsec">倉庫 <em id="chestStoreCount">0/15</em>　點格子可移回魚簍</div>
+    <div class="slotgrid" id="chestStoreGrid"></div>
+  </div>
+</div>
+<div id="panel-mineral" class="panel">
+  <div class="phead"><b>礦物倉庫</b><span>金幣 <em id="mineralGold">0</em>　💎 <em id="mineralDiamond">0</em>　<kbd>E</kbd> 關閉</span></div>
+  <div class="pbody">
+    <div class="dexsec">魚簍 <em id="mineralInvCount">0/30</em>　點格子移入礦物倉庫</div>
+    <div class="slotgrid" id="mineralInvGrid"></div>
+    <div class="dexsec">礦物倉庫 <em id="mineralStoreCount">0/15</em>　點格子可移回魚簍</div>
+    <div class="slotgrid" id="mineralStoreGrid"></div>
+  </div>
+</div>
+
+<div id="panel-shop" class="panel">
+  <div class="phead"><b>流浪商人</b><span>金幣 <em id="shopGold">0</em>　💎 <em id="shopDiamond">0</em>　<kbd>E</kbd> 關閉</span></div>
+  <div class="pbody">
+    <div class="dexsec">收購（魚簍與倉庫）</div>
+    <div id="shopSell"></div>
+    <div class="dexsec">販售</div>
+    <div id="shopBuy"></div>
+  </div>
+</div>
+
+<div id="panel-synth" class="panel">
+  <div class="phead"><b>合成台</b><span>礦物碎屑可逐級合成為錠、塊　<kbd>E</kbd> 關閉</span></div>
+  <div class="pbody">
+    <div class="dexsec">礦物合成</div>
+    <div id="synthList"></div>
+  </div>
+</div>
+
+<div id="panel-exchange" class="panel">
+  <div class="phead"><b>交換機</b><span><kbd>E</kbd> 關閉</span></div>
+  <div class="pbody">
+    <div class="dexsec">特殊物品</div>
+    <div id="exchangeList"></div>
+  </div>
+</div>
+
+<div id="panel-mysterybook" class="mysterybook-modal" role="dialog" aria-modal="true" aria-label="神秘書本">
+  <div class="mysterybook-page">
+    <button class="mysterybook-close" id="mysterybookClose" aria-label="關閉">×</button>
+    <h2 class="mysterybook-title">神 秘 書 本</h2>
+    <p class="mysterybook-body">欲望無窮，金錢永遠沒有賺夠的一天，就如同這個游戲一樣一直在追求更多更高階層的東西，你汲汲營營的釣魚釣鑽石買鎬子挖礦合成日復一日，終究賺到了這不合理的龐大礦石數但最終你獲得的卻是nothing</p>
+  </div>
+</div>
+<div id="panel-cook" class="panel">
+  <div class="phead"><b>營地火堆</b><span>飽食 <em id="cookSat">100</em>　<kbd>E</kbd> 關閉</span></div>
+  <div class="pbody">
+    <div class="dexsec">料理</div>
+    <div id="cookList"></div>
+    <div class="dexsec">加工</div>
+    <div id="cookExtra"></div>
+    <div class="dexsec">工具與倉庫</div>
+    <div id="cookTools"></div>
+  </div>
+</div>
+
+<div id="panel-dex" class="panel">
+  <div class="phead"><b>圖鑑</b><span>已收集 魚 <em id="dexFishCount">0</em>/24　卡片 <em id="dexCardCount">0</em>/5　<kbd>B</kbd> 關閉</span></div>
+  <div class="pbody">
+    <div class="dexsec">白天</div>
+    <div class="dexgrid" id="dexDay"></div>
+    <div class="dexsec">夜晚</div>
+    <div class="dexgrid" id="dexNight"></div>
+    <div class="dexsec">加成卡片（只能釣到一次）</div>
+    <div class="dexgrid" id="dexCards"></div>
+  </div>
+</div>
+<div id="quests">
+  <b>核心任務</b>
+  <div id="questList"></div>
+  <div id="questTip"></div>
+</div>
+<div id="muteTag">音效關</div>
+<div id="load">載入模型與地形…</div>
+
+<script>
+window.addEventListener('error', function (e) {
+  var el = document.getElementById('load');
+  if (el) { el.style.display = 'flex'; el.textContent = 'ERR: ' + e.message + ' @line ' + e.lineno; }
+});
+</script>
+<script src="./lib/three.min.js"></script>
+<script src="./lib/GLTFLoader.js"></script>
+<script src="./js/core/scene.js"></script>
+<script src="./js/core/world.js"></script>
+<script src="./js/actors/nature.js"></script>
+<script src="./js/actors/hero.js"></script>
+<script src="./js/sim/fishing.js"></script>
+<script src="./js/sim/time.js"></script>
+<script src="./js/sim/inventory.js"></script>
+<script src="./js/sim/gather.js"></script>
+<script src="./js/sim/camp.js"></script>
+<script src="./js/sim/quests.js"></script>
+<script src="./js/sim/synthesis.js"></script>
+<script src="./js/mine/mine-scene.js"></script>
+<script src="./js/mine/mining.js"></script>
+<script src="./js/core/save.js"></script>
+<script src="./js/main.js"></script>
+</body>
+</html>
