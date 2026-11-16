@@ -60,7 +60,7 @@ const RECIPES = [
   { n: '明蝦濃湯',   ing: [{ name: '明蝦' }, { name: '椰子' }, { name: '夜光菇' }],                sat: 36, price: 150, eff: '' },
   { n: '月夜魚湯',   ing: [{ oneOf: ['月魚', '燈籠魚'] }, { name: '夜光菇' }],                    sat: 45, price: 210, eff: '夜釣大幅加成' },
   { n: '船長燉鍋',   ing: [{ name: '石斑' }, { name: '石蟳' }, { name: '魷魚' }, { name: '夜光菇' }], sat: 55, price: 280, eff: '全效果' },
-  { n: '島主拼盤',   ing: [{ oneOf: ['紅甘', '皇帶魚'] }, { name: '明蝦' }, { name: '野莓' }],      sat: 60, price: 340, eff: '全效果＋' },
+  { n: '島嶼拼盤',   ing: [{ oneOf: ['紅甘', '皇帶魚'] }, { name: '明蝦' }, { name: '野莓' }],      sat: 60, price: 340, eff: '全效果＋' },
   { n: '沙茶螃蟹',   ing: [{ oneOf: ['花蟹', '石蟳'] }, { name: '沙茶醬' }, { name: '樹枝' }],      sat: 34, price: 110, eff: '飽食維持' },
   { n: '胡椒蝦',     ing: [{ name: '胡椒' }, { oneOf: ['白蝦', '明蝦'] }],                       sat: 22, price: 95,  eff: '鑽石加成' },
   { n: '清炒蝦蝦',   ing: [{ oneOf: ['白蝦', '明蝦'] }, { name: '樹枝' }],                        sat: 28, price: 95,  eff: '採集加速' },
@@ -545,25 +545,44 @@ function addPick(kind, x, z, label, r, group, extra) {
   }, extra || {}));
 }
 
+function randomPickLocation() {
+  for (let i = 0; i < 300; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const rad = 4.2 + Math.random() * 13.0;
+    const x = Math.cos(a) * rad;
+    const z = Math.sin(a) * rad;
+    if (typeof heightAt !== 'function' || heightAt(x, z) < 0.6) continue;
+    if (Math.hypot(x - CABIN.x, z - CABIN.z) < 4.5) continue;
+    if (Math.hypot(x - TROUGH_POS.x, z - TROUGH_POS.z) < 2.0) continue;
+    if (typeof distToPath === 'function' && distToPath(x, z) < 1.5) continue;
+    if (Math.hypot(x - 10, z - 5) < 2.0) continue;
+    if (Math.hypot(x, z - 14) < 5.0) continue;
+    if (Math.hypot(x, z - 6) < 3.4) continue;
+    if (pickSpots.some(p => Math.hypot(p.x - x, p.z - z) < 1.6)) continue;
+    return { x: x, z: z };
+  }
+  return null;
+}
+
 (function placeMaterials() {
   addPick('berry', -6.5, 5.2, '按 E 採野莓', 2.3, bushMesh(), {
-    cooldown: 180, bob: true, give: [{ name: '野莓', min: 2, max: 3 }]
+    cooldown: 90, bob: true, give: [{ name: '野莓', min: 2, max: 3 }]
   });
   addPick('berry', 3.8, -8.4, '按 E 採野莓', 2.3, bushMesh(), {
-    cooldown: 180, bob: true, give: [{ name: '野莓', min: 2, max: 3 }]
+    cooldown: 90, bob: true, give: [{ name: '野莓', min: 2, max: 3 }]
   });
   addPick('berry', -2.4, 10.2, '按 E 採野莓', 2.3, bushMesh(), {
-    cooldown: 180, bob: true, give: [{ name: '野莓', min: 2, max: 3 }]
+    cooldown: 90, bob: true, give: [{ name: '野莓', min: 2, max: 3 }]
   });
 
   addPick('palm', 10.2, -6.0, '按 E 摘椰子', 2.6, palmMesh(), {
-    cooldown: 240, give: [{ name: '椰子', min: 1, max: 1 }]
+    cooldown: 120, give: [{ name: '椰子', min: 1, max: 1 }]
   });
   addPick('palm', -11.0, -0.6, '按 E 摘椰子', 2.6, palmMesh(), {
-    cooldown: 240, give: [{ name: '椰子', min: 1, max: 1 }]
+    cooldown: 120, give: [{ name: '椰子', min: 1, max: 1 }]
   });
   addPick('palm', 8.8, 6.4, '按 E 摘椰子', 2.6, palmMesh(), {
-    cooldown: 240, give: [{ name: '椰子', min: 1, max: 1 }]
+    cooldown: 120, give: [{ name: '椰子', min: 1, max: 1 }]
   });
 
   /* 夜光菇、發光貝殼 → 新遊戲隨機散布
@@ -807,6 +826,18 @@ function collectFromLocal(p) {
     p.group.scale.set(1, 1, 1);
     p.group.position.y = p.baseY;
     p.group.rotation.z = 0;
+    /* 椰子再生：在隨機地點生成新的椰子樹（冷卻後出現） */
+    const palmLoc = randomPickLocation();
+    if (palmLoc) {
+      const newPalm = addPick('palm', palmLoc.x, palmLoc.z, '按 E 摘椰子', 2.6, palmMesh(), {
+        cooldown: 120, give: [{ name: '椰子', min: 1, max: 1 }]
+      });
+      newPalm.active = false;
+      const gmPalm = (typeof growthMultiplier === 'function') ? growthMultiplier() : 1;
+      newPalm.cd = newPalm.cooldown / Math.max(0.1, gmPalm);
+      newPalm.collectT = -1;
+      newPalm.group.visible = false;
+    }
     lastGather = performance.now();
     setPrompt('採到 ' + parts.join('、') + (full ? '（魚簍已滿）' : '') + '，椰子樹可砍', 'good');
     burstSplash(p.x, p.baseY + 0.5, p.z, 0.4);
@@ -842,6 +873,17 @@ function collectFromLocal(p) {
   if (!parts.length) {
     setPrompt('魚簍滿了，先清出空間', 'bad');
     return;
+  }
+  /* 野莓再生：採集後移到隨機地點重新生長 */
+  if (p.kind === 'berry') {
+    const berryLoc = randomPickLocation();
+    if (berryLoc) {
+      p.x = berryLoc.x;
+      p.z = berryLoc.z;
+      const berryY = groundHeightAt(berryLoc.x, berryLoc.z);
+      p.baseY = berryY;
+      p.group.position.set(berryLoc.x, berryY, berryLoc.z);
+    }
   }
   p.active = false;
   const gm = (typeof growthMultiplier === 'function') ? growthMultiplier() : 1;

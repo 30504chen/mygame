@@ -191,6 +191,25 @@ function loadGame() {
     }
   })();
 
+  /* 舊存檔料理「島主拼盤」改名為「島嶼拼盤」，保留數量與屬性 */
+  (function migrateIslandPlatter() {
+    const MIGRATE = { '島主拼盤': '島嶼拼盤' };
+    for (const bag of [inventory, storage, mineralStore]) {
+      for (const oldName of Object.keys(MIGRATE)) {
+        const newName = MIGRATE[oldName];
+        const rec = bag[oldName];
+        if (!rec) continue;
+        delete bag[oldName];
+        if (bag[newName]) {
+          bag[newName].count += rec.count;
+        } else {
+          rec.name = newName;
+          bag[newName] = rec;
+        }
+      }
+    }
+  })();
+
   /* 靜音狀態跟著存檔 */
   if (s.mute !== undefined) {
     muted = !!s.mute;
