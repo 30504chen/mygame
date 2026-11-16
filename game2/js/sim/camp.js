@@ -545,6 +545,25 @@ function addPick(kind, x, z, label, r, group, extra) {
   }, extra || {}));
 }
 
+function randomPickLocation() {
+  for (let i = 0; i < 300; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const rad = 4.2 + Math.random() * 13.0;
+    const x = Math.cos(a) * rad;
+    const z = Math.sin(a) * rad;
+    if (typeof heightAt !== 'function' || heightAt(x, z) < 0.6) continue;
+    if (Math.hypot(x - CABIN.x, z - CABIN.z) < 4.5) continue;
+    if (Math.hypot(x - TROUGH_POS.x, z - TROUGH_POS.z) < 2.0) continue;
+    if (typeof distToPath === 'function' && distToPath(x, z) < 1.5) continue;
+    if (Math.hypot(x - 10, z - 5) < 2.0) continue;
+    if (Math.hypot(x, z - 14) < 5.0) continue;
+    if (Math.hypot(x, z - 6) < 3.4) continue;
+    if (pickSpots.some(p => Math.hypot(p.x - x, p.z - z) < 1.6)) continue;
+    return { x: x, z: z };
+  }
+  return null;
+}
+
 (function placeMaterials() {
   addPick('berry', -6.5, 5.2, '按 E 採野莓', 2.3, bushMesh(), {
     cooldown: 90, bob: true, give: [{ name: '野莓', min: 2, max: 3 }]
@@ -807,6 +826,18 @@ function collectFromLocal(p) {
     p.group.scale.set(1, 1, 1);
     p.group.position.y = p.baseY;
     p.group.rotation.z = 0;
+    /* 椰子再生：在隨機地點生成新的椰子樹（冷卻後出現） */
+    const palmLoc = randomPickLocation();
+    if (palmLoc) {
+      const newPalm = addPick('palm', palmLoc.x, palmLoc.z, '按 E 摘椰子', 2.6, palmMesh(), {
+        cooldown: 120, give: [{ name: '椰子', min: 1, max: 1 }]
+      });
+      newPalm.active = false;
+      const gmPalm = (typeof growthMultiplier === 'function') ? growthMultiplier() : 1;
+      newPalm.cd = newPalm.cooldown / Math.max(0.1, gmPalm);
+      newPalm.collectT = -1;
+      newPalm.group.visible = false;
+    }
     lastGather = performance.now();
     setPrompt('採到 ' + parts.join('、') + (full ? '（魚簍已滿）' : '') + '，椰子樹可砍', 'good');
     burstSplash(p.x, p.baseY + 0.5, p.z, 0.4);
@@ -842,6 +873,17 @@ function collectFromLocal(p) {
   if (!parts.length) {
     setPrompt('魚簍滿了，先清出空間', 'bad');
     return;
+  }
+  /* 野莓再生：採集後移到隨機地點重新生長 */
+  if (p.kind === 'berry') {
+    const berryLoc = randomPickLocation();
+    if (berryLoc) {
+      p.x = berryLoc.x;
+      p.z = berryLoc.z;
+      const berryY = groundHeightAt(berryLoc.x, berryLoc.z);
+      p.baseY = berryY;
+      p.group.position.set(berryLoc.x, berryY, berryLoc.z);
+    }
   }
   p.active = false;
   const gm = (typeof growthMultiplier === 'function') ? growthMultiplier() : 1;
