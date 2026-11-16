@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<!--
+  ============================================================
+  【檔案角色】index.html = 整個遊戲的「入口頁面 / 骨架」
+  ------------------------------------------------------------
+  這個檔案本身幾乎不含遊戲邏輯，只負責三件事：
+    1. 提供畫面結構（canvas 畫布 + 輸入名字的彈出層）
+    2. 載入樣式 (style.css)
+    3. 依序載入程式：先決定排行榜要用雲端還是本機 → 再載入主遊戲 game.js
+
+  【整體架構（推測，依本檔引用的檔案）】
+    index.html   → 頁面骨架 + 啟動順序控制（本檔）
+    style.css    → 版面、像素風格、#nameOverlay 的外觀與 .hidden 規則
+    game.js      → 遊戲主程式（畫面繪製、跑酷邏輯、操作、排行榜呼叫）
+    firebase.js  → Firebase 雲端排行榜模組（以 ES Module 載入，
+                   完成後會設定 window.DLRemote）
+
+  【資料流】
+    firebase.js ──設定──▶ window.DLRemote ──由 DLRemoteReady 傳遞──▶ game.js
+  ============================================================
+-->
+<html lang="zh-Hant"> <!-- 語言設為繁體中文，利於瀏覽器翻譯與無障礙閱讀 -->
+<head>
+  <meta charset="UTF-8"> <!-- 使用 UTF-8，才能正確顯示中文 -->
+  <!-- 手機版 viewport：寬度跟隨裝置，縮放比例 1:1 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Death Line｜像素跑酷</title>
+  <!-- 載入外部樣式表（畫布縮放、名字輸入面板等外觀都在這） -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- #stage：舞台容器。canvas 與名字輸入層都放在裡面，
+       方便 CSS 用同一個容器做置中、縮放，並讓輸入層疊在畫布上方 -->
+  <div id="stage">
+    <!--
+      #game：遊戲真正的畫面。
+      width/height 是「內部繪圖解析度」480x270（16:9 的低解析度），
+      這是像素風格的關鍵：用小畫布繪製，再由 CSS 放大顯示，
+      這樣像素會保持方塊感（通常搭配 CSS image-rendering: pixelated）。
+      game.js 會用 document.getElementById('game').getContext('2d') 取得繪圖物件。
+    -->
+    <canvas id="game" width="480" height="270"></canvas>
+
+    <!--
+      #nameOverlay：「輸入名字」的彈出層，用 HTML 而非 canvas 製作，
+      因為文字輸入框用原生 <input> 最方便（支援中文輸入法、手機鍵盤）。
+      class="hidden" 表示預設隱藏；遊戲結束需要登錄排行榜時，
+      game.js 會移除 hidden class 把它顯示出來。
+    -->
+    <div id="nameOverlay" class="hidden">
+      <div class="name-panel">
+        <!-- 標題與提示文字有設 id，是因為 game.js 可能會依情況動態改字
+             （例如：新紀錄時顯示不同標題） -->
+        <h2 id="nameTitle">留下你的名字</h2>
+        <p id="nameHint">最多 8 個字元，空白則為「無名騎士」</p>
+        <!--
+          maxlength="8"       ：限制最多 8 個字元
+          autocomplete="off"  ：關閉瀏覽器自動填入建議
+          spellcheck="false"  ：關閉拼字檢查的紅色底線
+          placeholder         ：沒輸入時顯示的預設提示，
+                                空白送出時 game.js 會改用「無名騎士」
+        -->
+        <input id="nameInput" type="text" maxlength="8" autocomplete="off" spellcheck="false" placeholder="無名騎士">
+        <!-- type="button" 避免被當成表單送出；點擊事件由 game.js 綁定 -->
+        <button id="nameSubmit" type="button">確認</button>
+      </div>
+    </div>
+  </div>
+
+  <!--
+    ============================================================
+    【啟動腳本】決定排行榜要用雲端 (Firebase) 還是本機 (localStorage 之類)
+    ------------------------------------------------------------
+    重點觀念：Promise（承諾）
+      - ES Module（firebase.js）是「非同步」載入的，
+        game.js 啟動時它不一定已經準備好。
+      - 所以這裡先建立一個 Promise：window.DLRemoteReady，
+        game.js 只要 await 它，就能等到「雲端模組好了或放棄了」再決定怎麼做。
+    ============================================================
+  -->
+  <script>
+    // Firebase 全球排行榜：模組載入完成後才會 resolve。
+    // 直接以 file:// 開啟時跳過模組，自動使用本機排行榜。
+    window.DLRemoteReady = new Promise(resolve => {
+      // 把 resolve 函式掛到 window，讓「別的檔案」（firebase.js）
+      // 在載入完成後能呼叫 window.__resolveDLRemote(...) 來通知「我好了」。
+      window.__resolveDLRemote = resolve;
+
+      // 【逾時保護】最多等 4 秒。
+      // 若網路慢或 Firebase 載入失敗，4 秒後自動 resolve：
+      //   - 若 window.DLRemote 已存在 → 回傳雲端物件
+      //   - 否則回傳 null → game.js 看到 null 就改用本機排行榜（降級備援）
+      // 註：Promise 只能被 resolve 一次，若 firebase.js 已先成功，這行就無作用。
+      setTimeout(() => resolve(window.DLRemote || null), 4000);
+    });
+
+    // 判斷頁面網址協定：
+    // 直接雙擊開啟 html 檔時協定是 file://。
+    // 瀏覽器基於安全性限制，file:// 下無法載入 ES Module（會有 CORS 錯誤），
+    // 所以此時直接宣告「沒有雲端」(null)，不必等 4 秒。
+    if (location.protocol === 'file:') {
+      window.__resolveDLRemote(null);
+    } else {
+      // 透過 http(s) 伺服器開啟時，才動態建立 <script> 載入 firebase.js
+      const firebaseScript = document.createElement('script');
+      firebaseScript.type = 'module';      // 以 ES Module 方式載入（可使用 import）
+      firebaseScript.src = 'firebase.js';  // Firebase 初始化與排行榜讀寫都在此檔
+      document.head.appendChild(firebaseScript);
+    }
+  </script>
+
+  <!--
+    【主程式】game.js 放在最後載入，原因：
+      1. 此時上面的 canvas、input、button 等 DOM 元素都已存在，可直接 getElementById。
+      2. window.DLRemoteReady 已經先建立好，game.js 可直接使用。
+    「?v=20261113」是快取破壞參數 (cache busting)：
+      每次更新遊戲就改這個數字（這裡是日期），瀏覽器會視為新檔案重新下載，
+      避免玩家看到舊版 game.js。
+  -->
+  <script src="game.js?v=20261113"></script>
+</body>
+</html>

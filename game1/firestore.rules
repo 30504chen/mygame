@@ -1,0 +1,43 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function validScore(d) {
+      return d.keys().hasOnly(['name', 'score', 'coins', 'time', 'deaths', 'ts'])
+        && d.name is string
+        && d.name.size() > 0
+        && d.name.size() <= 8
+        && d.score is int
+        && d.score >= 0
+        && d.score <= 7000
+        && d.coins is int
+        && d.coins >= 0
+        && d.coins <= 60
+        && (d.time is float || d.time is int)
+        && d.time > 0
+        && d.time <= 7200
+        && d.deaths is int
+        && d.deaths >= 0
+        && d.deaths <= 100000;
+    }
+
+    match /scores/{docId} {
+      // 全球排行榜公開讀取
+      allow read: if true;
+
+      // 新成績：欄位與數值必須合法
+      allow create: if validScore(request.resource.data);
+
+      // 同名只保留更好的成績：分數更高，或同分但時間更快／死亡更少
+      allow update: if validScore(request.resource.data)
+        && (request.resource.data.score > resource.data.score
+          || (request.resource.data.score == resource.data.score
+              && (request.resource.data.time < resource.data.time
+                || (request.resource.data.time == resource.data.time
+                    && request.resource.data.deaths <= resource.data.deaths))));
+
+      // 不允許玩家從前端刪除全球紀錄
+      allow delete: if false;
+    }
+  }
+}
