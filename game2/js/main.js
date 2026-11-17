@@ -168,7 +168,7 @@ function tick() {
     _fpsValue = Math.round(_fpsFrames * 1000 / (_now - _fpsLast));
     _fpsFrames = 0;
     _fpsLast = _now;
-    console.log('[FPS]', _fpsValue);
+    // console.log('[FPS]', _fpsValue);
     if (_fpsValue > 0 && _fpsValue < 30) { _lowFpsStreak++; if (_lowFpsStreak >= 3) autoDegrade(); }
     else _lowFpsStreak = 0;
   }
